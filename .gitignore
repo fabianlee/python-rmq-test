@@ -1,0 +1,7 @@
+include/*
+lib/*
+lib64/*
+share/*
+bin/*
+pyvenv.cfg
+pip-selfcheck.json
