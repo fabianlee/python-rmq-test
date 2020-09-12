@@ -19,8 +19,7 @@ docker-test:
 docker-test-cli:
 	sudo docker run -it --rm --entrypoint "/bin/bash" $(OPV)
 
-## runs bssl with parameters passed from command line "
-## example:
+## runs with parameters passed from command line, examples:
 ## make docker-run CMD="./producer.py --host=192.168.1.100"
 ## make docker-run CMD="./consumer.py --host=192.168.1.100"
 ## make docker-run CMD="./get_ip.py"
@@ -30,6 +29,17 @@ docker-run:
 ## pushes to docker hub
 docker-push:
 	sudo docker push $(OPV)
+
+
+## convenience tasks for running produer/consumer against privateIP of rmq
+docker-run-producer: get-rabbitmq-ip
+	sudo docker run -it --rm $(OPV) ./producer.py --host=$(RMQ) $(CMD)
+docker-run-consumer: get-rabbitmq-ip
+	sudo docker run -it --rm $(OPV) ./consumer.py --host=$(RMQ) $(CMD)
+
+## gets IP address of running rabbit server
+get-rabbitmq-ip:
+	$(eval RMQ=$(shell sudo docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' my-rabbit))
 
 
 # runs rabbitmq server
@@ -50,3 +60,4 @@ endif
 	$(eval RMQ=$(shell sudo docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' my-rabbit))
 	@echo RabbitMQ server listening at $(RMQ):5672 and also host server:5672
 	@echo RabbitMQ web admin gui listening at $(RMQ):15672 and also host server:15672
+
