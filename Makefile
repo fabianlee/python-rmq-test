@@ -3,6 +3,9 @@ PROJECT := python-rmq-test
 VERSION := 1.0.0
 OPV := $(OWNER)/$(PROJECT):$(VERSION)
 
+## cannot be evaluated in target and used in ifdef, ifdef evaluated during parse of makefile
+ISRUNNING := $(shell sudo docker ps -a -f name=my-rabbit --format='{{.Names}}' | wc -l )
+
 # builds docker image
 docker-build:
 	sudo docker build -f Dockerfile -t $(OPV) .
@@ -44,20 +47,22 @@ get-rabbitmq-ip:
 
 # runs rabbitmq server
 run-rabbitmq-background:
-	$(eval ISRUNNING=$(shell sudo docker ps -a -f name=my-rabbit --format='{{.Names}}' | wc -l ))
 	@echo ISRUNNING = $(ISRUNNING)
-ifeq (1, 1)
+ifeq ($(ISRUNNING),1)
 	@echo RabbitMQ server is already running, no need to startup container
 else
-	sudo docker stop my-rabbit
 	sudo docker run --rm -it -d --hostname my-rabbit --name my-rabbit -p 15672:15672 -p 5672:5672 rabbitmq:3-management
 	@echo
 	@echo RabbitMQ server starting...
-	sleep 10
+	sleep 20
 	sudo docker logs my-rabbit | grep startup
 endif
 	@echo
 	$(eval RMQ=$(shell sudo docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' my-rabbit))
 	@echo RabbitMQ server listening at $(RMQ):5672 and also host server:5672
 	@echo RabbitMQ web admin gui listening at $(RMQ):15672 and also host server:15672
+
+# stops rabbitmq server
+stop-rabbitmq:
+	sudo docker stop my-rabbit
 
